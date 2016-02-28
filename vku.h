@@ -600,7 +600,11 @@ VKUAPI_ATTR VkBool32 vkuGetQueueFamilyIndex(VkPhysicalDevice physicalDevice, uin
 
 
 
-VKUAPI_ATTR VkResult vkuCreateDevice(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)
+VKUAPI_ATTR VkResult vkuCreateDevice(
+	uint32_t enabledExtensionCount, const char* const* ppEnabledExtensionNames,
+	uint32_t enabledLayerCount, const char* const* ppEnabledLayerNames,
+	const VkAllocationCallbacks *pAllocator,
+	VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)
 {
 	assert(device);
 
@@ -629,8 +633,80 @@ VKUAPI_ATTR VkResult vkuCreateDevice(VkPhysicalDevice physicalDevice, uint32_t q
 
 	deviceCreateInfo.pEnabledFeatures = NULL;
 
+	deviceCreateInfo.enabledExtensionCount = enabledExtensionCount;
+	deviceCreateInfo.ppEnabledExtensionNames = ppEnabledExtensionNames;
 
-	return vkCreateDevice(physicalDevice, &deviceCreateInfo, NULL, device);
+	deviceCreateInfo.enabledLayerCount = enabledLayerCount;
+	deviceCreateInfo.ppEnabledLayerNames = ppEnabledLayerNames;
+
+
+	return vkCreateDevice(physicalDevice, &deviceCreateInfo, pAllocator, device);
+}
+
+VKUAPI_ATTR VkResult vkuCreateSimpleDevice(VkBool32 enableValidation, const VkAllocationCallbacks *pAllocator, VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)
+{
+	assert(device);
+
+
+	uint32_t enabledExtensionCount = 0;
+	char **enabledExtensionNames = vkuGetDeviceExtensionNames(physicalDevice, NULL, &enabledExtensionCount);
+
+	uint32_t actualExtensionCount = enabledExtensionCount;
+
+
+	uint32_t enabledLayerCount = 0;
+	char **enabledLayerNames = NULL;
+
+	uint32_t actualLayerCount = enabledLayerCount;
+
+
+	if (enableValidation)
+	{
+		// Validation is enabled, so just add all the layers
+
+		enabledLayerNames = vkuGetDeviceLayerNames(physicalDevice, &enabledLayerCount);
+		actualLayerCount = enabledLayerCount;
+	}
+	else
+	{
+		// Validation is not enabled, so remove the VK_EXT_debug_report extension
+
+		for (uint32_t enabledExtensionIndex = 0; enabledExtensionIndex < actualExtensionCount; enabledExtensionIndex++)
+		{
+			char *enabledExtensionName = enabledExtensionNames[enabledExtensionIndex];
+
+			if (!vku_strcmp(enabledExtensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			{
+				// If it's the last extension name, just decrement enabledExtensionCount
+				if (enabledExtensionIndex == (actualExtensionCount - 1))
+				{
+					enabledExtensionCount--;
+				}
+				else // If not, swap with the last extension name
+				{
+					enabledExtensionNames[enabledExtensionIndex] = enabledExtensionNames[actualExtensionCount - 1];
+					enabledExtensionNames[actualExtensionCount - 1] = enabledExtensionName;
+
+					// The first if will be called in the end, decrementing the enabledExtensionCount
+				}
+			}
+		}
+	}
+
+
+	VkResult err = vkuCreateDevice(enabledExtensionCount, enabledExtensionNames, enabledLayerCount, enabledLayerNames, pAllocator, physicalDevice, queueFamilyIndex, device);
+
+
+	// Remember to delete it by the actualExtensionCount and not the enabledExtensionCount
+	vkuDeleteInstanceExtensionNames(actualExtensionCount, enabledExtensionNames);
+	// enabledExtensionNames = NULL;
+
+	// Remember to delete it by the actualLayerCount and not the enabledLayerCount
+	vkuDeleteInstanceLayerNames(actualLayerCount, enabledLayerNames);
+	// enabledLayerNames = NULL;
+
+
+	return err;
 }
 
 

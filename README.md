@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
 
 	VkDevice device;
-	err = vkuCreateDevice(physicalDevice, queueFamilyIndex, &device);
+	err = vkuCreateSimpleDevice(enableValidation, NULL, physicalDevice, queueFamilyIndex, &device);
 	
 	if (err)
 		printf("vkCreateInstance Error %d: %s\n", err, vkuGetResultString(err));
@@ -270,8 +270,25 @@ VkResult vkuCreateInstance(uint32_t apiVersion,
 `VkBool32 vkuGetQueueFamilyIndex(VkPhysicalDevice physicalDevice, uint32_t *queueFamilyIndex)`
 > Get a QueueFamilyIndex a `VkPhysicalDevice`.
 
-`vkuCreateDevice(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)`
-> Create a `VkDevice` using a `VkPhysicalDevice` and a QueueFamilyIndex.
+
+`VkResult vkuCreateSimpleDevice(VkBool32 enableValidation, const VkAllocationCallbacks *pAllocator, VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)`
+
+> Creates a `VkDevice` using a `VkPhysicalDevice` and a QueueFamilyIndex,
+> without any hassle. It simply adds all extensions which the system
+> supports. Though if `enableValidation` is set to `VK_FALSE`, then `VK_EXT_debug_report` isn't added.
+> Further if `enableValidation` is set to `VK_TRUE` then all supported layers are added as well.
+
+```c
+VkResult vkuCreateDevice(
+	uint32_t enabledExtensionCount, const char* const* ppEnabledExtensionNames,
+	uint32_t enabledLayerCount, const char* const* ppEnabledLayerNames,
+	const VkAllocationCallbacks *pAllocator,
+	VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkDevice *device)
+```
+
+> This overall just serves as a shortcut for creating a `VkDevice`.
+
+
 
 
 
