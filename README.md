@@ -262,7 +262,7 @@ VkResult vkuCreateInstance(uint32_t apiVersion,
 > This overall just serves as a shortcut for creating a `VkInstance`.
 
 
-# VkPhysicalDevice & VkDevice Creation
+### VkPhysicalDevice & VkDevice Creation
 
 `VkResult vkuGetPhysicalDevice(VkInstance instance, VkPhysicalDevice *physicalDevice)`
 > Get a `VkPhysicalDevice` using an `VkInstance`.
