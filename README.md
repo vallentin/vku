@@ -1,3 +1,5 @@
+**Status:** This library needs to be revisioned, as the approach the library took from the get-go isn't overall great.
+
 # vku - Vulkan Utilities
 
 ## Introduction
